@@ -1,0 +1,875 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+int Prate_inc=10;
+int lrate_dec=50;
+int N1 = 400;
+int N2 = 900;
+int Pt = 80;
+int Ncritical = 1200;
+int level;
+int P;
+int damage=0;
+int coss=0;
+int invested=0;
+clock c;
+
+//Parameter to select response
+int option=0; //Select response 0-&gt; reboot,  1-&gt; shutdown,  2-&gt; repair
+//int psucc=50; // Set probability of successful deployment of response. Range=[0-100]
+
+
+//Parameter to enable attacker
+bool enable=0;
+
+//Parameters to select a policy
+//int rescm=90; //set authorization countermeasure efficiency. Range=[1-100]
+//int pcm=95; //set authentication countermeasure efficiency. Range=[0-100]
+
+
+//Parameters to set evidence
+bool status_pump=1;
+bool status_valve=1;
+bool status_ctrl=1;
+bool status_burner=1;
+bool status_boiler=1;
+bool status_monitor=1;
+
+typedef int[0,9] id_t;
+bool compromise_ctrl=0; //Status of compromise, 0-&gt; not compromised, 1-&gt; compromised
+
+
+
+broadcast chan activate[20];
+broadcast chan deactivate[20];
+broadcast chan disrupt[20];
+broadcast chan critical;
+broadcast chan resolved;
+broadcast chan distress[10];
+broadcast chan success;
+broadcast chan fail;
+broadcast chan disrupt_blr;
+broadcast chan success_p;
+broadcast chan fail_p;
+broadcast chan repair[20];
+broadcast chan shutdown[20];
+broadcast chan reboot[20];</declaration>
+	<template>
+		<name>Monitor</name>
+		<parameter>int id,  double lambda, int psucc, int cost_action</parameter>
+		<declaration>id_t x;</declaration>
+		<location id="id0" x="-1097" y="-867">
+		</location>
+		<location id="id1" x="-952" y="-867">
+		</location>
+		<location id="id2" x="-757" y="-867">
+			<label kind="exponentialrate" x="-748" y="-858">lambda</label>
+		</location>
+		<location id="id3" x="-544" y="-944">
+			<committed/>
+		</location>
+		<location id="id4" x="-544" y="-867">
+			<committed/>
+		</location>
+		<location id="id5" x="-544" y="-791">
+			<committed/>
+		</location>
+		<location id="id6" x="-272" y="-909">
+			<label kind="exponentialrate" x="-238" y="-918">lambda</label>
+		</location>
+		<location id="id7" x="-272" y="-841">
+			<name x="-282" y="-875">tempp</name>
+			<label kind="exponentialrate" x="-246" y="-850">lambda</label>
+		</location>
+		<location id="id8" x="-655" y="-867">
+			<committed/>
+		</location>
+		<branchpoint id="id9" x="-408" y="-867">
+		</branchpoint>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="-637" y="-739">fail_p!</label>
+			<nail x="-272" y="-748"/>
+			<nail x="-1004" y="-748"/>
+			<nail x="-1004" y="-833"/>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="-646" y="-1028">success_p!</label>
+			<nail x="-272" y="-994"/>
+			<nail x="-953" y="-994"/>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id6"/>
+			<label kind="assignment" x="-484" y="-943">invested=invested+cost_action</label>
+			<label kind="probability" x="-391" y="-918">psucc</label>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id7"/>
+			<label kind="assignment" x="-476" y="-816">invested=invested+cost_action</label>
+			<label kind="probability" x="-390" y="-837">100-psucc</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id9"/>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id9"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id9"/>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-646" y="-824">option==2</label>
+			<label kind="synchronisation" x="-646" y="-807">repair[x]!</label>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-629" y="-892">option==1</label>
+			<label kind="synchronisation" x="-629" y="-867">shutdown[x]!</label>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id3"/>
+			<label kind="guard" x="-646" y="-952">option==0</label>
+			<label kind="synchronisation" x="-646" y="-935">reboot[x]!</label>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="-868" y="-799">fail?</label>
+			<nail x="-757" y="-799"/>
+			<nail x="-953" y="-799"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id8"/>
+			<label kind="synchronisation" x="-731" y="-892">success?</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="select" x="-876" y="-909">e:id_t</label>
+			<label kind="synchronisation" x="-893" y="-892">distress[e]?</label>
+			<label kind="assignment" x="-876" y="-867">x:=e</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="-1063" y="-892">activate[id]?</label>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">Boiler</name>
+		<parameter>int id, int burner_id, int pump_id</parameter>
+		<declaration>// Place local declarations here.</declaration>
+		<location id="id10" x="-34" y="-8">
+			<name x="-42" y="-51">Stop</name>
+		</location>
+		<location id="id11" x="153" y="-8">
+			<name x="127" y="-51">Initialize</name>
+		</location>
+		<location id="id12" x="340" y="-8">
+			<name x="323" y="-51">Normal</name>
+		</location>
+		<location id="id13" x="255" y="119">
+			<name x="238" y="136">Critical</name>
+		</location>
+		<location id="id14" x="59" y="119">
+			<name x="-25" y="110">Degraded</name>
+		</location>
+		<init ref="id10"/>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id14"/>
+			<label kind="synchronisation" x="374" y="-34">disrupt[id]?</label>
+			<nail x="433" y="-8"/>
+			<nail x="433" y="178"/>
+			<nail x="59" y="178"/>
+		</transition>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id14"/>
+			<label kind="synchronisation" x="119" y="127">disrupt[id]?</label>
+		</transition>
+		<transition>
+			<source ref="id13"/>
+			<target ref="id11"/>
+			<label kind="guard" x="144" y="42">P&lt;=Pt</label>
+			<label kind="synchronisation" x="136" y="59">resolved?</label>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id13"/>
+			<label kind="guard" x="314" y="42">P&gt;=Pt</label>
+			<label kind="synchronisation" x="314" y="59">critical?</label>
+		</transition>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id12"/>
+			<label kind="synchronisation" x="195" y="-34">activate[pump_id]?</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="8" y="-51">status_boiler==1</label>
+			<label kind="synchronisation" x="25" y="-34">activate[id]?</label>
+			<label kind="assignment" x="25" y="-8">level:=0,P:=0</label>
+		</transition>
+	</template>
+	<template>
+		<name>Attacker</name>
+		<parameter>int id, int ctrl_id, int valve_id, int burner_id, int pump_id, double lambda, int attack_cost, int damage_ctrl, int damage_valve, int damage_burner, int damage_pump, int damage_boiler, int pcm, int rescm, int cost_pcm, int cost_rcm</parameter>
+		<location id="id15" x="-47727" y="-47506">
+			<name x="-47803" y="-47514">Deactivate</name>
+		</location>
+		<location id="id16" x="-47532" y="-47506">
+			<name x="-47515" y="-47514">Waiting</name>
+		</location>
+		<location id="id17" x="-47532" y="-47668">
+			<name x="-47608" y="-47676">Activated</name>
+			<label kind="exponentialrate" x="-47608" y="-47659">lambda</label>
+		</location>
+		<location id="id18" x="-47328" y="-47668">
+			<name x="-47311" y="-47676">Breach_authentication</name>
+			<label kind="exponentialrate" x="-47311" y="-47659">lambda</label>
+		</location>
+		<location id="id19" x="-47328" y="-47804">
+			<label kind="exponentialrate" x="-47353" y="-47787">lambda</label>
+		</location>
+		<location id="id20" x="-47456" y="-47804">
+			<name x="-47515" y="-47795">Breach_authorization</name>
+			<label kind="exponentialrate" x="-47472" y="-47778">lambda</label>
+		</location>
+		<location id="id21" x="-47617" y="-47804">
+			<label kind="exponentialrate" x="-47634" y="-47787">lambda</label>
+		</location>
+		<location id="id22" x="-47838" y="-47804">
+			<label kind="exponentialrate" x="-47821" y="-47795">lambda</label>
+		</location>
+		<location id="id23" x="-47838" y="-47719">
+			<name x="-47848" y="-47753">tempat</name>
+		</location>
+		<location id="id24" x="-47744" y="-47736">
+			<label kind="exponentialrate" x="-47754" y="-47702">lambda</label>
+		</location>
+		<branchpoint id="id25" x="-47532" y="-47804">
+		</branchpoint>
+		<branchpoint id="id26" x="-47243" y="-47744">
+		</branchpoint>
+		<init ref="id15"/>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id17"/>
+			<label kind="guard" x="-47726" y="-47736">status_monitor==0</label>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="-47676" y="-47693">fail_p?</label>
+			<nail x="-47727" y="-47608"/>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="-47863" y="-47617">success_p?</label>
+			<nail x="-47770" y="-47591"/>
+		</transition>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id24"/>
+			<label kind="synchronisation" x="-47617" y="-47761">success!</label>
+			<label kind="probability" x="-47608" y="-47736">rescm</label>
+			<nail x="-47532" y="-47736"/>
+		</transition>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="-47668" y="-47617">deactivate[pump_id]?</label>
+			<nail x="-47540" y="-47659"/>
+			<nail x="-47540" y="-47659"/>
+			<nail x="-47574" y="-47634"/>
+			<nail x="-47574" y="-47549"/>
+		</transition>
+		<transition>
+			<source ref="id22"/>
+			<target ref="id23"/>
+			<label kind="guard" x="-48050" y="-47795">level&gt;Ncritical</label>
+			<label kind="synchronisation" x="-48050" y="-47778">disrupt[id]!</label>
+			<label kind="assignment" x="-48050" y="-47761">damage=damage+damage_boiler</label>
+		</transition>
+		<transition>
+			<source ref="id22"/>
+			<target ref="id22"/>
+			<label kind="guard" x="-47982" y="-47872">level&lt;=Ncritical</label>
+			<label kind="assignment" x="-47982" y="-47855">level=level+100</label>
+			<nail x="-47838" y="-47898"/>
+			<nail x="-47906" y="-47804"/>
+		</transition>
+		<transition>
+			<source ref="id21"/>
+			<target ref="id22"/>
+			<label kind="synchronisation" x="-47770" y="-47829">activate[pump_id]!</label>
+			<label kind="assignment" x="-47821" y="-47855">damage=damage+damage_pump</label>
+		</transition>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id21"/>
+			<label kind="synchronisation" x="-47583" y="-47804">fail!</label>
+			<label kind="assignment" x="-47600" y="-47855">invested=invested+cost_rcm</label>
+			<label kind="probability" x="-47600" y="-47829">100-rescm</label>
+		</transition>
+		<transition>
+			<source ref="id20"/>
+			<target ref="id25"/>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id20"/>
+			<label kind="synchronisation" x="-47438" y="-47829">distress[ctrl_id]!</label>
+			<label kind="assignment" x="-47472" y="-47846">damage=damage+damage_ctrl</label>
+		</transition>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id17"/>
+			<label kind="assignment" x="-47353" y="-47719">enable=0</label>
+			<label kind="probability" x="-47353" y="-47744">pcm</label>
+		</transition>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id19"/>
+			<label kind="assignment" x="-47268" y="-47787">compromise_ctrl=1,
+invested=invested+cost_pcm</label>
+			<label kind="probability" x="-47268" y="-47804">100-pcm</label>
+		</transition>
+		<transition>
+			<source ref="id18"/>
+			<target ref="id26"/>
+		</transition>
+		<transition>
+			<source ref="id17"/>
+			<target ref="id18"/>
+			<label kind="guard" x="-47515" y="-47659">level&gt;=0 &amp;&amp; status_pump==1</label>
+			<label kind="assignment" x="-47515" y="-47642">coss=coss+attack_cost,
+enable=1</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id17"/>
+			<label kind="guard" x="-47523" y="-47591">level&gt;=0</label>
+			<label kind="synchronisation" x="-47523" y="-47574">activate[pump_id]?</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="-47676" y="-47532">activate[id]?</label>
+		</transition>
+	</template>
+	<template>
+		<name>Controller</name>
+		<parameter>int id, int ctrl_id, int pump_id, int burner_id, int valve_id, double lambda, double lambda1</parameter>
+		<declaration>int limit=1;</declaration>
+		<location id="id27" x="-493" y="-51">
+			<name x="-594" y="-59">Deactivated</name>
+		</location>
+		<location id="id28" x="-255" y="-51">
+			<name x="-297" y="-34">Initialize</name>
+			<label kind="exponentialrate" x="-239" y="-51">lambda</label>
+		</location>
+		<location id="id29" x="-85" y="-51">
+			<name x="-111" y="-9">Fill_boiler</name>
+			<label kind="exponentialrate" x="-103" y="-26">lambda</label>
+		</location>
+		<location id="id30" x="-77" y="127">
+			<name x="-52" y="118">Boil_feed_water</name>
+			<label kind="exponentialrate" x="-60" y="144">lambda1</label>
+		</location>
+		<location id="id31" x="297" y="-51">
+			<name x="246" y="-17">Degraded_Boiler</name>
+		</location>
+		<location id="id32" x="-349" y="246">
+			<name x="-392" y="280">Critical_boiler</name>
+			<label kind="exponentialrate" x="-358" y="263">lambda1</label>
+		</location>
+		<location id="id33" x="-1" y="34">
+			<committed/>
+		</location>
+		<location id="id34" x="-162" y="34">
+			<committed/>
+		</location>
+		<location id="id35" x="-77" y="246">
+			<committed/>
+		</location>
+		<location id="id36" x="-196" y="246">
+			<committed/>
+		</location>
+		<location id="id37" x="-349" y="127">
+			<committed/>
+		</location>
+		<location id="id38" x="-230" y="127">
+			<committed/>
+		</location>
+		<location id="id39" x="178" y="-51">
+			<committed/>
+		</location>
+		<location id="id40" x="-426" y="42">
+			<committed/>
+		</location>
+		<location id="id41" x="-85" y="-204">
+			<name x="-68" y="-195">Degraded</name>
+			<label kind="exponentialrate" x="-85" y="-178">lambda</label>
+		</location>
+		<location id="id42" x="-212" y="-161">
+		</location>
+		<location id="id43" x="-178" y="-110">
+			<committed/>
+		</location>
+		<location id="id44" x="119" y="-272">
+			<committed/>
+		</location>
+		<location id="id45" x="-255" y="-331">
+		</location>
+		<location id="id46" x="-331" y="-238">
+			<committed/>
+		</location>
+		<location id="id47" x="-144" y="-450">
+		</location>
+		<location id="id48" x="-493" y="-442">
+			<committed/>
+		</location>
+		<init ref="id27"/>
+		<transition>
+			<source ref="id48"/>
+			<target ref="id27"/>
+			<label kind="synchronisation" x="-637" y="-357">deactivate[pump_id]!</label>
+			<label kind="assignment" x="-586" y="-382">status_ctrl=0</label>
+		</transition>
+		<transition>
+			<source ref="id47"/>
+			<target ref="id48"/>
+			<label kind="synchronisation" x="-475" y="-463">success_p?</label>
+			<label kind="assignment" x="-475" y="-446">compromise_ctrl=0, enable=0</label>
+		</transition>
+		<transition>
+			<source ref="id47"/>
+			<target ref="id41"/>
+			<label kind="synchronisation" x="-68" y="-399">fail_p?</label>
+			<label kind="assignment" x="-68" y="-382">limit=0</label>
+			<nail x="-68" y="-340"/>
+		</transition>
+		<transition>
+			<source ref="id41"/>
+			<target ref="id47"/>
+			<label kind="synchronisation" x="-246" y="-374">shutdown[ctrl_id]?</label>
+		</transition>
+		<transition>
+			<source ref="id46"/>
+			<target ref="id28"/>
+			<label kind="synchronisation" x="-476" y="-212">deactivate[pump_id]!</label>
+		</transition>
+		<transition>
+			<source ref="id45"/>
+			<target ref="id46"/>
+			<label kind="synchronisation" x="-459" y="-323">success_p?</label>
+			<label kind="assignment" x="-459" y="-306">compromise_ctrl=0,
+enable=0</label>
+		</transition>
+		<transition>
+			<source ref="id45"/>
+			<target ref="id41"/>
+			<label kind="synchronisation" x="-238" y="-289">fail_p?</label>
+			<label kind="assignment" x="-229" y="-272">limit=0</label>
+			<nail x="-239" y="-259"/>
+		</transition>
+		<transition>
+			<source ref="id41"/>
+			<target ref="id45"/>
+			<label kind="synchronisation" x="-229" y="-331">reboot[ctrl_id]?</label>
+		</transition>
+		<transition>
+			<source ref="id44"/>
+			<target ref="id31"/>
+			<label kind="synchronisation" x="137" y="-289">disrupt[id]!</label>
+			<nail x="297" y="-272"/>
+		</transition>
+		<transition>
+			<source ref="id41"/>
+			<target ref="id44"/>
+			<label kind="guard" x="-67" y="-272">limit==0</label>
+			<nail x="51" y="-272"/>
+			<nail x="59" y="-272"/>
+		</transition>
+		<transition>
+			<source ref="id43"/>
+			<target ref="id29"/>
+			<label kind="synchronisation" x="-153" y="-110">activate[pump_id]!</label>
+		</transition>
+		<transition>
+			<source ref="id42"/>
+			<target ref="id43"/>
+			<label kind="synchronisation" x="-348" y="-161">success_p?</label>
+			<label kind="assignment" x="-348" y="-144">compromise_ctrl=0,
+enable=0</label>
+		</transition>
+		<transition>
+			<source ref="id42"/>
+			<target ref="id41"/>
+			<label kind="synchronisation" x="-221" y="-229">fail_p?</label>
+			<label kind="assignment" x="-221" y="-212">limit=0</label>
+			<nail x="-161" y="-212"/>
+		</transition>
+		<transition>
+			<source ref="id41"/>
+			<target ref="id42"/>
+			<label kind="synchronisation" x="-178" y="-178">repair[ctrl_id]?</label>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id41"/>
+			<label kind="guard" x="-85" y="-161">compromise_ctrl==1</label>
+			<label kind="synchronisation" x="-85" y="-144">distress[ctrl_id]?</label>
+		</transition>
+		<transition>
+			<source ref="id41"/>
+			<target ref="id39"/>
+			<label kind="guard" x="0" y="-229">level&gt;Ncritical</label>
+			<label kind="synchronisation" x="-34" y="-204">deactivate[pump_id]!</label>
+			<nail x="170" y="-204"/>
+		</transition>
+		<transition>
+			<source ref="id40"/>
+			<target ref="id28"/>
+			<label kind="synchronisation" x="-426" y="-17">resolved!</label>
+		</transition>
+		<transition>
+			<source ref="id32"/>
+			<target ref="id40"/>
+			<label kind="guard" x="-562" y="93">level&lt;N1 &amp;&amp; P&lt;Pt</label>
+			<label kind="synchronisation" x="-562" y="110">deactivate[valve_id]!</label>
+			<nail x="-349" y="237"/>
+			<nail x="-426" y="144"/>
+		</transition>
+		<transition>
+			<source ref="id38"/>
+			<target ref="id30"/>
+			<label kind="synchronisation" x="-213" y="127">activate[burner_id]!</label>
+		</transition>
+		<transition>
+			<source ref="id37"/>
+			<target ref="id38"/>
+			<label kind="synchronisation" x="-324" y="127">resolved!</label>
+		</transition>
+		<transition>
+			<source ref="id32"/>
+			<target ref="id37"/>
+			<label kind="guard" x="-341" y="161">P&lt;Pt</label>
+			<label kind="synchronisation" x="-341" y="178">deactivate[valve_id]!</label>
+		</transition>
+		<transition>
+			<source ref="id39"/>
+			<target ref="id31"/>
+			<label kind="synchronisation" x="204" y="-85">disrupt[id]!</label>
+		</transition>
+		<transition>
+			<source ref="id36"/>
+			<target ref="id32"/>
+			<label kind="synchronisation" x="-324" y="220">activate[valve_id]!</label>
+		</transition>
+		<transition>
+			<source ref="id35"/>
+			<target ref="id36"/>
+			<label kind="synchronisation" x="-154" y="220">critical!</label>
+		</transition>
+		<transition>
+			<source ref="id30"/>
+			<target ref="id35"/>
+			<label kind="guard" x="-60" y="169">P&gt;Pt</label>
+			<label kind="synchronisation" x="-60" y="186">deactivate[burner_id]!</label>
+		</transition>
+		<transition>
+			<source ref="id34"/>
+			<target ref="id29"/>
+			<label kind="synchronisation" x="-239" y="-26">activate[pump_id]!</label>
+		</transition>
+		<transition>
+			<source ref="id30"/>
+			<target ref="id34"/>
+			<label kind="guard" x="-256" y="59">level&lt;N1 &amp;&amp; P&lt;=Pt</label>
+			<label kind="synchronisation" x="-256" y="76">deactivate[burner_id]!</label>
+		</transition>
+		<transition>
+			<source ref="id33"/>
+			<target ref="id30"/>
+			<label kind="synchronisation" x="-26" y="76">activate[burner_id]!</label>
+		</transition>
+		<transition>
+			<source ref="id29"/>
+			<target ref="id33"/>
+			<label kind="guard" x="-26" y="-34">level&gt;N2 &amp;&amp; enable==0</label>
+			<label kind="synchronisation" x="-26" y="-17">deactivate[pump_id]!</label>
+		</transition>
+		<transition>
+			<source ref="id28"/>
+			<target ref="id29"/>
+			<label kind="synchronisation" x="-230" y="-77">activate[pump_id]!</label>
+		</transition>
+		<transition>
+			<source ref="id27"/>
+			<target ref="id28"/>
+			<label kind="guard" x="-467" y="-93">status_ctrl==1 &amp;&amp; status_boiler==1</label>
+			<label kind="synchronisation" x="-416" y="-76">activate[ctrl_id]?</label>
+		</transition>
+	</template>
+	<template>
+		<name>Pump</name>
+		<parameter> int pump_id, double lambda</parameter>
+		<declaration>int linc_rate=50;</declaration>
+		<location id="id49" x="-255" y="8">
+			<name x="-272" y="-34">OFF</name>
+		</location>
+		<location id="id50" x="-68" y="8">
+			<name x="-93" y="-34">ON</name>
+			<label kind="exponentialrate" x="-85" y="25">lambda</label>
+		</location>
+		<init ref="id49"/>
+		<transition>
+			<source ref="id50"/>
+			<target ref="id50"/>
+			<label kind="guard" x="0" y="-51">level&lt;=N2 &amp;&amp; enable==0</label>
+			<label kind="assignment" x="0" y="-25">level=level+linc_rate</label>
+			<nail x="-8" y="-68"/>
+			<nail x="-8" y="8"/>
+		</transition>
+		<transition>
+			<source ref="id50"/>
+			<target ref="id49"/>
+			<label kind="synchronisation" x="-229" y="76">deactivate[pump_id]?</label>
+			<nail x="-170" y="76"/>
+		</transition>
+		<transition>
+			<source ref="id49"/>
+			<target ref="id50"/>
+			<label kind="guard" x="-229" y="-34">status_pump==1</label>
+			<label kind="synchronisation" x="-229" y="-17">activate[pump_id]?</label>
+		</transition>
+	</template>
+	<template>
+		<name>Burner</name>
+		<parameter>int burner_id, double lambda</parameter>
+		<location id="id51" x="-374" y="-42">
+			<name x="-391" y="-76">OFF</name>
+		</location>
+		<location id="id52" x="-195" y="-42">
+			<name x="-212" y="-76">ON</name>
+			<label kind="exponentialrate" x="-221" y="-25">lambda</label>
+		</location>
+		<init ref="id51"/>
+		<transition>
+			<source ref="id52"/>
+			<target ref="id52"/>
+			<label kind="guard" x="-170" y="25">level&gt;0 &amp;&amp; P&lt;=Pt</label>
+			<label kind="assignment" x="-170" y="50">P=P+Prate_inc,
+level=level-lrate_dec</label>
+			<nail x="-127" y="25"/>
+			<nail x="-127" y="-42"/>
+		</transition>
+		<transition>
+			<source ref="id52"/>
+			<target ref="id51"/>
+			<label kind="synchronisation" x="-357" y="25">deactivate[burner_id]?</label>
+			<nail x="-289" y="25"/>
+		</transition>
+		<transition>
+			<source ref="id51"/>
+			<target ref="id52"/>
+			<label kind="guard" x="-340" y="-85">status_burner==1</label>
+			<label kind="synchronisation" x="-348" y="-68">activate[burner_id]?</label>
+		</transition>
+	</template>
+	<template>
+		<name> System</name>
+		<parameter>int id, int ctrl_id</parameter>
+		<location id="id53" x="-535" y="-8">
+			<name x="-545" y="-42">Initial</name>
+			<committed/>
+		</location>
+		<location id="id54" x="-255" y="-8">
+			<name x="-265" y="-42">Active</name>
+		</location>
+		<location id="id55" x="-110" y="-8">
+			<name x="-120" y="-42">Deactive</name>
+		</location>
+		<location id="id56" x="-399" y="-8">
+			<committed/>
+		</location>
+		<init ref="id53"/>
+		<transition>
+			<source ref="id56"/>
+			<target ref="id54"/>
+			<label kind="synchronisation" x="-382" y="-34">activate[ctrl_id]!</label>
+		</transition>
+		<transition>
+			<source ref="id54"/>
+			<target ref="id55"/>
+			<label kind="synchronisation" x="-212" y="-34">disrupt[id]?</label>
+		</transition>
+		<transition>
+			<source ref="id53"/>
+			<target ref="id56"/>
+			<label kind="synchronisation" x="-501" y="-34">activate[id]!</label>
+		</transition>
+	</template>
+	<template>
+		<name>Actuator</name>
+		<parameter>int valve_id, double lambda</parameter>
+		<declaration>int Prate_dec=5;</declaration>
+		<location id="id57" x="-458" y="-178">
+			<name x="-475" y="-212">ON</name>
+			<label kind="exponentialrate" x="-484" y="-161">lambda</label>
+		</location>
+		<location id="id58" x="-637" y="-178">
+			<name x="-654" y="-212">OFF</name>
+		</location>
+		<init ref="id58"/>
+		<transition>
+			<source ref="id57"/>
+			<target ref="id57"/>
+			<label kind="guard" x="-399" y="-110">P&gt;0</label>
+			<label kind="assignment" x="-425" y="-93">P=P-Prate_dec</label>
+			<nail x="-390" y="-111"/>
+			<nail x="-391" y="-178"/>
+		</transition>
+		<transition>
+			<source ref="id57"/>
+			<target ref="id58"/>
+			<label kind="synchronisation" x="-620" y="-110">deactivate[valve_id]?</label>
+			<nail x="-552" y="-111"/>
+		</transition>
+		<transition>
+			<source ref="id58"/>
+			<target ref="id57"/>
+			<label kind="guard" x="-612" y="-221">status_valve==1</label>
+			<label kind="synchronisation" x="-611" y="-204">activate[valve_id]?</label>
+		</transition>
+	</template>
+	<system> 
+
+//Sys=System(1,5);
+//SB=Boiler(1,2,3);
+//Pmp=Pump(2,0.0055);
+//Bu=Burner(3,0.0055);
+//SRV=Actuator(4,0.0055);
+//Ctrl=Controller(1,5,2,3,4,0.0055,0.000242);
+//attkr=Attacker(1,5,4,3,2,0.0055,20,1,1,1,1);
+//attkr=Attack_pump(4,2,1,3,0,0.0055,20,200,150,460,300,800,1,9);
+//int id, int ctrl_id, int valve_id, int burner_id, int pump_id, double lambda, int attack_cost, int damage_ctrl
+//int damage_pump, int damage_boiler, int pc1, int pc2
+//int id, int ctrl_id, int valve_id, int burner_id, int pump_id, double lambda, int attack_cost, int pc, int pv, int pb, int pp
+
+
+Sys=System(4,2);         //int id, int ctrl_id
+SB=Boiler(4,3,0);        //int id, int burner_id, int pump_id
+Pmp=Pump(0,0.0055);      
+Bu=Burner(3,0.0055);
+SRV=Actuator(1,0.0055);
+Ctrl=Controller(4,2,0,3,1,0.0055,0.000242);
+attkr=Attacker(4,2,1,3,0,0.0055,20,200,150,460,300,800,90,80,900,400);
+ 
+
+mon=Monitor(4,0.0055,10,200);    //reboot 200, shutdown 350 repair 500
+//system Sys,SB,Pmp,Bu,SRV,Ctrl,attkr;//,mon;
+system Sys,SB,Pmp,Bu,SRV,Ctrl,attkr,mon;</system>
+	<queries>
+		<query>
+			<formula>A[] not deadlock</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>Pr[c&lt;=26400](&lt;&gt;Sys.Deactive)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E[c&lt;=26400; 40000](max: coss)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E[c&lt;=26400 ;40000](max: damage)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E[c&lt;=26400 ;40000](max: invested)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula></formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula></formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>Pr[c&lt;=8800](&lt;&gt;Sys.Deactive)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>Pr[c&lt;=4400](&lt;&gt;Sys.Deactive)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula></formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; attkr.tempat</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>Pr[c&lt;=26400] (&lt;&gt; attkr.tempat)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>Pr[c&lt;=26400] (&lt;&gt; Ctrl.Degraded_Boiler)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula></formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula></formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula></formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>Pr[c&lt;=26400](&lt;&gt;SRV.ON and Pmp.ON)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E&lt;&gt; SRV.ON and Pmp.ON</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>Pr[c&lt;=26400] (&lt;&gt; level&gt;1200 and coss&gt;0)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>Pr[c&lt;=8800] (&lt;&gt; P&gt;115 and coss&lt;=0)</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>
